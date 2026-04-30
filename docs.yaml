@@ -1,0 +1,426 @@
+---
+name: "Laravel Chat Application"
+description: "Real-time chat application built with Laravel, React, TypeScript, and musonza/chat package"
+version: "1.0.0"
+author: "Ralph Jan Gallegos"
+
+# Application Configuration
+app:
+  name: "mosunzachat"
+  environment: "development"
+  url: "http://127.0.0.1:8000"
+  debug: true
+  
+# System Requirements
+requirements:
+  php: ">=8.1"
+  composer: ">=2.0"
+  node: ">=16.0"
+  npm: ">=8.0"
+  database:
+    type: "MySQL/MariaDB"
+    version: ">=5.7"
+  
+# Dependencies
+dependencies:
+  backend:
+    laravel/framework: "^10.0"
+    musonza/chat: "^6.14"
+    inertiajs/inertia-laravel: "^0.6"
+    tightenco/ziggy: "^1.0"
+  
+  frontend:
+    react: "^18.0"
+    typescript: "^5.0"
+    @inertiajs/react: "^1.0"
+    @inertiajs/core: "^1.0"
+    lucide-react: "^0.263"
+    tailwindcss: "^3.0"
+  
+# Database Configuration
+database:
+  connection: "mysql"
+  host: "127.0.0.1"
+  port: 3306
+  database: "mosunzachat"
+  username: "root"
+  password: ""
+  
+  migrations:
+    - "0001_01_01_000000_create_users_table"
+    - "0001_01_01_000001_create_cache_table"
+    - "0001_01_01_000002_create_jobs_table"
+    - "0001_01_01_000003_create_sessions_table"
+    - "2026_04_30_072007_create_chat_tables"
+    - "2026_04_30_074800_add_name_to_chat_conversations_table"
+  
+  seeders:
+    - "DatabaseSeeder"
+    - "TestUserSeeder"
+
+# API Routes
+api:
+  conversations:
+    index:
+      method: "GET"
+      path: "/chat/conversations"
+      description: "Get all conversations for current user"
+      
+    store:
+      method: "POST"
+      path: "/chat/conversations"
+      description: "Create new conversation"
+      body:
+        participants: "array|required"
+        data.title: "string|optional|max:255"
+  
+  messages:
+    index:
+      method: "GET"
+      path: "/chat/conversation/{id}/messages"
+      description: "Get messages for a conversation"
+      
+    store:
+      method: "POST"
+      path: "/chat/conversation/{id}/message"
+      description: "Send message to conversation"
+      body:
+        message: "string|required"
+  
+  users:
+    index:
+      method: "GET"
+      path: "/chat/users"
+      description: "Get all users available for chat"
+
+# Frontend Components
+components:
+  pages:
+    chat:
+      index:
+        file: "resources/js/pages/chat/index.tsx"
+        purpose: "Display conversation list and create new conversations"
+        
+      conversation:
+        file: "resources/js/pages/chat/conversation.tsx"
+        purpose: "Display individual conversation messages"
+        features:
+          - "Real-time message polling (3 seconds)"
+          - "Auto-scroll to new messages"
+          - "Message sending"
+          - "Responsive layout"
+
+# Key Features
+features:
+  - "Real-time messaging"
+  - "Private conversations"
+  - "User authentication"
+  - "Responsive design"
+  - "TypeScript support"
+  - "Modern UI with Tailwind CSS"
+  - "Message polling"
+  - "Auto-scrolling"
+
+# Installation Steps
+installation:
+  - step: 1
+    action: "Clone repository"
+    command: "git clone <repository-url> && cd mosunzachat"
+    
+  - step: 2
+    action: "Install backend dependencies"
+    command: "composer install"
+    
+  - step: 3
+    action: "Install musonza/chat package"
+    command: "composer require musonza/chat"
+    
+  - step: 4
+    action: "Publish chat package configuration and assets"
+    command: "php artisan vendor:publish --provider=\"Musonza\\Chat\\ChatServiceProvider\""
+    
+  - step: 5
+    action: "Install frontend dependencies"
+    command: "npm install"
+    
+  - step: 6
+    action: "Setup environment"
+    command: "cp .env.example .env && php artisan key:generate"
+    
+  - step: 7
+    action: "Run database migrations"
+    command: "php artisan migrate"
+    
+  - step: 8
+    action: "Seed test users (optional)"
+    command: "php artisan db:seed --class=TestUserSeeder"
+    
+  - step: 9
+    action: "Start development servers"
+    commands:
+      - "php artisan serve"
+      - "npm run dev"
+
+# musonza/chat Package Setup
+chat_package:
+  name: "musonza/chat"
+  version: "^6.14"
+  description: "Laravel chat package for real-time messaging"
+  
+  installation:
+    command: "composer require musonza/chat"
+    
+  publish:
+    command: "php artisan vendor:publish --provider=\"Musonza\\Chat\\ChatServiceProvider\""
+    description: "Publish configuration files and assets"
+    creates:
+      - "config/chat.php"
+      - "database/migrations/chat_tables"
+      - "resources/views/chat"
+  
+  migrations:
+    command: "php artisan migrate"
+    description: "Run chat package migrations"
+    tables_created:
+      - "chat_conversations"
+      - "chat_messages"
+      - "chat_participation"
+      - "chat_message_notifications"
+  
+  configuration:
+    file: "config/chat.php"
+    description: "Chat package configuration file"
+    key_settings:
+      - "user_model"
+      - "message_model"
+      - "notification_model"
+  
+  additional_setup:
+    - step: "Add Messageable trait to User model"
+      file: "app/Models/User.php"
+      code: "use Musonza\\Chat\\Traits\\Messageable;"
+      
+    - step: "Publish chat package assets (if needed)"
+      command: "php artisan vendor:publish --tag=chat-assets --force"
+      
+    - step: "Clear configuration cache"
+      command: "php artisan config:clear"
+
+# Development Commands
+commands:
+  backend:
+    serve: "php artisan serve"
+    description: "Start Laravel development server on http://127.0.0.1:8000"
+    
+    migrate: "php artisan migrate"
+    description: "Run database migrations"
+    
+    migrate_fresh: "php artisan migrate:fresh --seed"
+    description: "Reset database and run all migrations with seeders"
+    
+    migrate_rollback: "php artisan migrate:rollback"
+    description: "Rollback the last database migration"
+    
+    tinker: "php artisan tinker"
+    description: "Open Laravel REPL for testing code"
+    
+    optimize: "php artisan optimize"
+    description: "Optimize application for production"
+    
+    cache_clear: "php artisan cache:clear"
+    description: "Clear application cache"
+    
+    config_cache: "php artisan config:cache"
+    description: "Create cache file for faster configuration loading"
+    
+    route_cache: "php artisan route:cache"
+    description: "Create route cache file for faster routing"
+    
+    view_cache: "php artisan view:cache"
+    description: "Compile and cache all Blade templates"
+    
+    queue_work: "php artisan queue:work"
+    description: "Start processing jobs in the queue"
+    
+    schedule_run: "php artisan schedule:run"
+    description: "Run scheduled tasks"
+    
+  frontend:
+    dev: "npm run dev"
+    description: "Start Vite development server with hot reload"
+    
+    build: "npm run build"
+    description: "Build assets for production"
+    
+    watch: "npm run watch"
+    description: "Watch for file changes and rebuild automatically"
+    
+    install: "npm install"
+    description: "Install all frontend dependencies"
+    
+    update: "npm update"
+    description: "Update frontend dependencies"
+    
+    clean: "npm run clean"
+    description: "Clean build artifacts and node_modules"
+    
+    lint: "npm run lint"
+    description: "Run ESLint to check code quality"
+    
+    format: "npm run format"
+    description: "Format code with Prettier"
+    
+  testing:
+    test: "php artisan test"
+    description: "Run all PHPUnit tests"
+    
+    pest: "./vendor/bin/pest"
+    description: "Run Pest tests"
+    
+    test_coverage: "php artisan test --coverage"
+    description: "Run tests with code coverage report"
+    
+    test_filter: "php artisan test --filter TestName"
+    description: "Run specific test or test class"
+    
+  database:
+    seed: "php artisan db:seed"
+    description: "Run database seeders"
+    
+    seed_class: "php artisan db:seed --class=TestUserSeeder"
+    description: "Run specific seeder class"
+    
+    fresh_seed: "php artisan migrate:fresh --seed"
+    description: "Fresh migrate with all seeders"
+    
+  composer:
+    install: "composer install"
+    description: "Install PHP dependencies"
+    
+    update: "composer update"
+    description: "Update PHP dependencies"
+    
+    dump_autoload: "composer dump-autoload"
+    description: "Regenerate autoloader"
+    
+    optimize_autoload: "composer dump-autoload --optimize"
+    description: "Optimize autoloader for production"
+    
+  git:
+    init: "git init"
+    description: "Initialize Git repository"
+    
+    add: "git add ."
+    description: "Stage all changes for commit"
+    
+    commit: "git commit -m 'Your commit message'"
+    description: "Commit staged changes with message"
+    
+    push: "git push origin main"
+    description: "Push changes to remote repository"
+    
+    pull: "git pull origin main"
+    description: "Pull latest changes from remote repository"
+    
+    status: "git status"
+    description: "Show working tree status"
+    
+    log: "git log --oneline"
+    description: "Show commit history in compact format"
+
+# Test Users
+test_users:
+  - name: "John Doe"
+    email: "john@example.com"
+    password: "password"
+    
+  - name: "Jane Smith"
+    email: "jane@example.com"
+    password: "password"
+    
+  - name: "Bob Wilson"
+    email: "bob@example.com"
+    password: "password"
+
+# Troubleshooting
+troubleshooting:
+  issues:
+    - problem: "No conversations displayed"
+      solution: "Check musonza/chat migrations and ChatController data structure"
+      
+    - problem: "Messages not showing"
+      solution: "Verify name column in chat_conversations table and User Messageable trait"
+      
+    - problem: "Conversation creation fails"
+      solution: "Ensure User objects not IDs are passed to createConversation method"
+
+# File Structure
+structure:
+  app:
+    Http/Controllers:
+      - "ChatController.php"
+    Models:
+      - "User.php"
+      
+  database:
+    migrations:
+      - "2026_04_30_072007_create_chat_tables.php"
+      - "2026_04_30_074800_add_name_to_chat_conversations_table"
+    seeders:
+      - "TestUserSeeder.php"
+      
+  resources:
+    js/pages/chat:
+      - "index.tsx"
+      - "conversation.tsx"
+    views:
+      - "app.blade.php"
+      
+  routes:
+    - "web.php"
+    - "chat.php"
+
+# Deployment Notes
+deployment:
+  production:
+    - "Set APP_ENV=production"
+    - "Set APP_DEBUG=false"
+    - "Run php artisan config:cache"
+    - "Run php artisan route:cache"
+    - "Run php artisan view:cache"
+    - "Build frontend: npm run build"
+    
+  environment_variables:
+    required:
+      - "DB_CONNECTION"
+      - "DB_HOST"
+      - "DB_DATABASE"
+      - "DB_USERNAME"
+      - "DB_PASSWORD"
+      - "APP_URL"
+      
+# Security Considerations
+security:
+  - "CSRF protection enabled"
+  - "Input validation on all forms"
+  - "SQL injection prevention via Eloquent"
+  - "XSS protection via Laravel's built-in features"
+  - "Authentication required for all chat features"
+
+# Performance Notes
+performance:
+  - "Message polling every 3 seconds"
+  - "Pagination for conversations and messages"
+  - "Lazy loading recommended for large chat histories"
+  - "Consider WebSocket implementation for real-time updates"
+
+# Future Enhancements
+future:
+  - "WebSocket integration for real-time updates"
+  - "File/image sharing"
+  - "Message reactions"
+  - "Typing indicators"
+  - "Online status"
+  - "Push notifications"
+  - "Message search"
+  - "Conversation archiving"
