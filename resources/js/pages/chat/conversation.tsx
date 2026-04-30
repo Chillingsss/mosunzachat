@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { echo } from '@/echo';
 
 interface Message {
     id: string;
@@ -56,13 +57,30 @@ export default function ChatConversation({ conversationId }: Props) {
 
         loadData();
         
-        // Poll for new messages every 3 seconds (simple implementation)
-        const interval = setInterval(() => {
-            fetchMessages();
-        }, 3000);
+        if (echo) {
+            console.log('Setting up WebSocket for conversation:', conversationId);
+
+            const channel = echo.channel(`mc-chat-conversation.${conversationId}`);
+
+            channel.subscribed(() => {
+                console.log('Successfully subscribed to channel: mc-chat-conversation.' + conversationId);
+            });
+
+            channel.listen('.MessageSentEvent', (e: any) => {
+                console.log('MessageSentEvent received:', e);
+                setMessages(prev => [...prev, e.message]);
+            });
+
+            return () => {
+                console.log('Leaving channel: mc-chat-conversation.' + conversationId);
+                echo.leaveChannel(`mc-chat-conversation.${conversationId}`);
+            };
+        } else {
+            console.log('Echo not available, WebSocket not initialized');
+        }
         
-        return () => clearInterval(interval);
-    }, [fetchMessages]);
+        return () => {}; // Return empty cleanup function if echo is null
+    }, [fetchMessages, conversationId]);
 
     useEffect(() => {
         scrollToBottom();

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSentEvent;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Musonza\Chat\Facades\ChatFacade;
-use Musonza\Chat\Models\Conversation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Musonza\Chat\Facades\ChatFacade;
 
 class ChatController extends Controller
 {
@@ -21,17 +23,12 @@ class ChatController extends Controller
             if (!$user) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
-            
             $conversations = ChatFacade::conversations()->setParticipant($user)->get();
-            
-            // The get method returns a paginator, so we need to access the 'data' property.
             return response()->json($conversations->toArray()['data']);
-        } catch (\Exception $e) {
-            \Log::error('Failed to fetch conversations: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to fetch conversations',
-                'message' => $e->getMessage()
-            ], 500);
+        }
+        catch (\Exception $e) {
+            Log::error('Failed to fetch conversations: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch conversations', 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -42,18 +39,12 @@ class ChatController extends Controller
             if (!$currentUser) {
                 return response()->json(['error' => 'User not authenticated'], 401);
             }
-            
-            $users = \App\Models\User::where('id', '!=', $currentUser->id)
-                ->select('id', 'name', 'email')
-                ->get();
-                
+            $users = User::where('id', '!=', $currentUser->id)->select('id', 'name', 'email')->get();
             return response()->json($users);
-        } catch (\Exception $e) {
-            \Log::error('Failed to fetch users: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to fetch users',
-                'message' => $e->getMessage()
-            ], 500);
+        }
+        catch (\Exception $e) {
+            Log::error('Failed to fetch users: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch users', 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -68,29 +59,20 @@ class ChatController extends Controller
 
         $user = Auth::user();
         $participantIds = $request->participants;
-        
-        // Add current user to participants if not already included
+
         if (!in_array($user->id, $participantIds)) {
             $participantIds[] = $user->id;
         }
 
-        // Fetch User models instead of using IDs
-        $participants = \App\Models\User::whereIn('id', $participantIds)->get()->all();
+        $participants = User::whereIn('id', $participantIds)->get()->all();
 
         try {
-            $conversation = ChatFacade::createConversation($participants)
-                ->makePrivate();
-
-            // Note: Title will be handled on the frontend for now
-            // The musonza/chat package stores metadata differently
-
+            $conversation = ChatFacade::createConversation($participants)->makePrivate();
             return response()->json($conversation);
-        } catch (\Exception $e) {
-            \Log::error('Failed to create conversation: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to create conversation',
-                'message' => $e->getMessage()
-            ], 500);
+        }
+        catch (\Exception $e) {
+            Log::error('Failed to create conversation: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to create conversation', 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -98,14 +80,12 @@ class ChatController extends Controller
     {
         $user = Auth::user();
         $conversation = ChatFacade::conversations()->setParticipant($user)->getById($id);
-        
+
         if (!$conversation) {
             abort(404);
         }
 
-        return inertia('chat/conversation', [
-            'conversationId' => $id
-        ]);
+        return inertia('chat/conversation', ['conversationId' => $id]);
     }
 
     public function sendMessage(Request $request, $id)
@@ -116,7 +96,7 @@ class ChatController extends Controller
 
         $user = Auth::user();
         $conversation = ChatFacade::conversations()->setParticipant($user)->getById($id);
-        
+
         if (!$conversation) {
             return response()->json(['error' => 'Conversation not found'], 404);
         }
@@ -126,6 +106,16 @@ class ChatController extends Controller
             ->to($conversation)
             ->send();
 
+        Log::info('Message sent', ['message_id' => $message->id, 'conversation_id' => $id]);
+
+        try {
+            broadcast(new MessageSentEvent($message, $id));
+            Log::info('MessageSentEvent broadcast successfully');
+        }
+        catch (\Exception $e) {
+            Log::error('Failed to broadcast MessageSentEvent: ' . $e->getMessage());
+        }
+
         return response()->json($message);
     }
 
@@ -133,14 +123,12 @@ class ChatController extends Controller
     {
         $user = Auth::user();
         $conversation = ChatFacade::conversations()->setParticipant($user)->getById($id);
-        
+
         if (!$conversation) {
             return response()->json(['error' => 'Conversation not found'], 404);
         }
 
         $messages = ChatFacade::conversation($conversation)->setParticipant($user)->getMessages();
-        
-        // The getMessages method returns a paginator, so we need to access the 'data' property.
         return response()->json($messages->toArray()['data']);
     }
 }

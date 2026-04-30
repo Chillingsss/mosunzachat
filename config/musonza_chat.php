@@ -13,7 +13,7 @@ return [
      * Channel: mc-chat-conversation.2,
      * Event: Musonza\Chat\Eventing\MessageWasSent
      */
-    'broadcasts' => false,
+    'broadcasts' => true,
 
     /*
      * Customize the broadcast connection and queue for MessageWasSent event.
