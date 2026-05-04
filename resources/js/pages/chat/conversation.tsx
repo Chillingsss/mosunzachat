@@ -68,12 +68,38 @@ export default function ChatConversation({ conversationId }: Props) {
 
             channel.listen('.MessageSentEvent', (e: any) => {
                 console.log('MessageSentEvent received:', e);
-                setMessages(prev => [...prev, e.message]);
+                setMessages(prev => {
+                    // Check if message already exists to prevent duplicates
+                    const messageExists = prev.some(msg => msg.id === e.message.id);
+                    
+                    if (messageExists) {
+                        console.log('Message already exists, skipping:', e.message.id);
+                        
+                        return prev;
+                    }
+                    
+                    return [...prev, e.message];
+                });
+            });
+
+            // Also listen for general conversation updates to refresh conversation list
+            const conversationsChannel = echo.channel('mc-conversations');
+            
+            conversationsChannel.listen('.ConversationUpdated', (e: any) => {
+                console.log('ConversationUpdated event received:', e);
+                // Trigger a global event to update conversation list
+                window.dispatchEvent(new CustomEvent('conversationUpdated', { 
+                    detail: { conversationId: e.conversation_id, lastMessage: e.last_message } 
+                }));
             });
 
             return () => {
-                console.log('Leaving channel: mc-chat-conversation.' + conversationId);
-                echo.leaveChannel(`mc-chat-conversation.${conversationId}`);
+                console.log('Leaving channels');
+                
+                if (echo) {
+                    echo.leaveChannel(`mc-chat-conversation.${conversationId}`);
+                    echo.leaveChannel('mc-conversations');
+                }
             };
         } else {
             console.log('Echo not available, WebSocket not initialized');
@@ -109,7 +135,6 @@ export default function ChatConversation({ conversationId }: Props) {
             
             if (response.ok) {
                 setNewMessage('');
-                await fetchMessages();
             }
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -153,6 +178,7 @@ export default function ChatConversation({ conversationId }: Props) {
                         <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
+                                    
                                     <Button 
                                         variant="ghost" 
                                         size="sm" 

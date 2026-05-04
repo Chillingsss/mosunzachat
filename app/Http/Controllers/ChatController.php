@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ConversationCreatedEvent;
 use App\Events\MessageSentEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -68,6 +69,16 @@ class ChatController extends Controller
 
         try {
             $conversation = ChatFacade::createConversation($participants)->makePrivate();
+            
+            // Broadcast conversation creation event to all participants
+            try {
+                broadcast(new ConversationCreatedEvent($conversation, $participants));
+                Log::info('ConversationCreatedEvent broadcast successfully');
+            }
+            catch (\Exception $e) {
+                Log::error('Failed to broadcast ConversationCreatedEvent: ' . $e->getMessage());
+            }
+            
             return response()->json($conversation);
         }
         catch (\Exception $e) {

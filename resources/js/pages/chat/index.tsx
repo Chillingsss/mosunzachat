@@ -4,6 +4,7 @@ import { MessageSquare, Users, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { echo } from '@/echo';
 
 interface Conversation {
     id: string;
@@ -114,6 +115,54 @@ export default function ChatIndex() {
         };
 
         loadData();
+
+        // Listen for conversation updates from other components
+        const handleConversationUpdate = () => {
+            console.log('Conversation update event received, refreshing conversations');
+            fetchConversations();
+        };
+
+        window.addEventListener('conversationUpdated', handleConversationUpdate);
+
+        // Also listen for WebSocket events for new conversations
+        if (echo) {
+            console.log('Setting up WebSocket for conversation list updates');
+            console.log('Echo instance available:', !!echo);
+            
+            const conversationsChannel = echo.channel('mc-conversations');
+            
+            conversationsChannel.subscribed(() => {
+                console.log('Successfully subscribed to mc-conversations channel');
+            });
+            
+            conversationsChannel.listen('.ConversationCreated', (e: any) => {
+                console.log('ConversationCreated event received:', e);
+                fetchConversations();
+            });
+            
+            conversationsChannel.listen('.ConversationUpdated', (e: any) => {
+                console.log('ConversationUpdated event received:', e);
+                fetchConversations();
+            });
+
+            conversationsChannel.error((error: any) => {
+                console.error('mc-conversations channel error:', error);
+            });
+
+            return () => {
+                console.log('Leaving mc-conversations channel');
+                
+                if (echo) {
+                    echo.leaveChannel('mc-conversations');
+                }
+            };
+        } else {
+            console.log('Echo not available, WebSocket not initialized');
+        }
+
+        return () => {
+            window.removeEventListener('conversationUpdated', handleConversationUpdate);
+        };
     }, [fetchConversations, fetchUsers]);
 
     const openConversation = (id: string) => {
@@ -162,6 +211,9 @@ export default function ChatIndex() {
             if (data.id) {
                 setShowUserModal(false);
                 setSelectedUsers([]);
+                console.log('Conversation created successfully:', data);
+                // Trigger immediate refresh of conversations for other users
+                fetchConversations();
                 router.visit(`/chat/conversation/${data.id}`);
             } else {
                 console.error('No conversation ID returned:', data);

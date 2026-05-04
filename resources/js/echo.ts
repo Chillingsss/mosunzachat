@@ -18,8 +18,8 @@ export const echo = typeof window !== 'undefined' ? new Echo({
     wssPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
     enabledTransports: ['ws', 'wss'] as ['ws', 'wss'],
-    disableStats: false,
-    cluster: 'mt1',
+    disableStats: true,
+    cluster: '',
     Pusher: Pusher,
     authEndpoint: '/broadcasting/auth',
 }) : null;
