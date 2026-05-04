@@ -1,0 +1,389 @@
+---
+name: "Laravel WebSocket Chat Setup Guide"
+description: "Complete documentation for setting up real-time chat with Laravel Reverb and musonza/chat"
+version: "1.0.0"
+author: "Ralph Jan Gallegos"
+
+# Overview
+overview:
+  title: "Free Real-Time Chat Implementation"
+  description: "This setup provides a complete real-time chat system using 100% free, self-hosted technologies"
+  cost: "FREE - No monthly fees"
+  stack: "Laravel + Reverb + musonza/chat + React"
+
+# Technology Stack
+technologies:
+  backend:
+    laravel:
+      version: "^11.0"
+      purpose: "PHP framework for the application"
+      cost: "FREE"
+    
+    laravel_reverb:
+      version: "^1.10"
+      purpose: "WebSocket server for real-time communication"
+      cost: "FREE - Self-hosted"
+      port: 8080
+      protocol: "WebSocket"
+    
+    musonza_chat:
+      version: "^6.14"
+      purpose: "Chat package for conversation management"
+      cost: "FREE - Open source"
+      features:
+        - "Conversation management"
+        - "Message storage"
+        - "Participant handling"
+        - "Event system"
+    
+    mysql:
+      purpose: "Database for message persistence"
+      cost: "FREE (with local hosting)"
+  
+  frontend:
+    react:
+      version: "^18.0"
+      purpose: "Frontend framework"
+      cost: "FREE"
+    
+    laravel_echo:
+      version: "^1.0"
+      purpose: "WebSocket client for real-time updates"
+      cost: "FREE"
+    
+    pusher_js:
+      version: "^8.0"
+      purpose: "WebSocket protocol implementation"
+      cost: "FREE"
+    
+    typescript:
+      version: "^5.0"
+      purpose: "Type safety"
+      cost: "FREE"
+
+# Environment Configuration
+environment:
+  required_variables:
+    # Laravel Reverb Configuration
+    REVERB_APP_ID:
+      description: "Unique identifier for Reverb app"
+      example: "app-69f7e1508641a"
+      required: true
+    
+    REVERB_APP_KEY:
+      description: "WebSocket connection key"
+      example: "7c6dcdb5506d11aa77055848c61533a95ee9015aa187cfd618fc5156b093ada6"
+      required: true
+      generation: "32-character hex string"
+    
+    REVERB_APP_SECRET:
+      description: "Secret key for authentication"
+      example: "a18a7fe01a8cc5169b9bb9204b55d5d253af3d87393fdbdaab66081acfb72c52"
+      required: true
+      generation: "32-character hex string"
+    
+    REVERB_HOST:
+      description: "WebSocket server host"
+      default: "127.0.0.1"
+      required: false
+    
+    REVERB_PORT:
+      description: "WebSocket server port"
+      default: "8080"
+      required: false
+    
+    REVERB_SCHEME:
+      description: "WebSocket protocol scheme"
+      default: "http"
+      options: ["http", "https"]
+      required: false
+    
+    # Broadcasting Configuration
+    BROADCAST_CONNECTION:
+      description: "Broadcast driver to use"
+      required: true
+      value: "reverb"
+      note: "Must be set to 'reverb' for WebSocket functionality"
+    
+    # Vite Configuration
+    VITE_REVERB_APP_KEY:
+      description: "Frontend WebSocket key"
+      required: true
+      note: "Must match REVERB_APP_KEY"
+    
+    VITE_REVERB_HOST:
+      description: "Frontend WebSocket host"
+      default: "127.0.0.1"
+      required: false
+    
+    VITE_REVERB_PORT:
+      description: "Frontend WebSocket port"
+      default: "8080"
+      required: false
+    
+    VITE_REVERB_SCHEME:
+      description: "Frontend WebSocket scheme"
+      default: "http"
+      required: false
+
+# Installation Steps
+installation:
+  steps:
+    1:
+      title: "Install Dependencies"
+      commands:
+        - "composer install"
+        - "npm install"
+      description: "Install all required packages"
+    
+    2:
+      title: "Generate Reverb Keys"
+      commands:
+        - "php generate_reverb_key.php"
+      description: "Generate secure WebSocket credentials"
+      output:
+        - "REVERB_APP_KEY"
+        - "REVERB_APP_SECRET" 
+        - "REVERB_APP_ID"
+    
+    3:
+      title: "Configure Environment"
+      file: ".env"
+      actions:
+        - "Add all required environment variables"
+        - "Set BROADCAST_CONNECTION=reverb"
+        - "Update VITE_REVERB_* variables"
+    
+    4:
+      title: "Update Vite Configuration"
+      file: "vite.config.ts"
+      actions:
+        - "Update fallback WebSocket key in define section"
+        - "Ensure environment variables are properly passed"
+    
+    5:
+      title: "Database Setup"
+      commands:
+        - "php artisan migrate"
+      description: "Run database migrations for chat tables"
+    
+    6:
+      title: "Start Services"
+      commands:
+        - "php artisan reverb:start"
+        - "php artisan serve"
+        - "npm run dev"
+      description: "Start WebSocket server, Laravel server, and Vite dev server"
+
+# Architecture Flow
+architecture:
+  message_flow:
+    steps:
+      1:
+        action: "User sends message via HTTP POST"
+        endpoint: "/chat/conversation/{id}/message"
+        controller: "ChatController@sendMessage"
+      
+      2:
+        action: "musonza/chat saves message to database"
+        package: "musonza/chat"
+        tables:
+          - "chat_messages"
+          - "chat_conversations"
+      
+      3:
+        action: "MessageSentEvent is broadcasted"
+        event: "MessageSentEvent"
+        channel: "mc-chat-conversation.{conversationId}"
+        driver: "Laravel Reverb"
+      
+      4:
+        action: "WebSocket delivers message to all connected clients"
+        technology: "WebSocket"
+        client: "Laravel Echo + Pusher.js"
+      
+      5:
+        action: "Frontend updates UI instantly"
+        component: "conversation.tsx"
+        method: "setMessages(prev => [...prev, e.message])"
+
+# Key Files
+key_files:
+  backend:
+    - "app/Http/Controllers/ChatController.php"
+    - "app/Events/MessageSentEvent.php"
+    - "config/broadcasting.php"
+    - "config/reverb.php"
+    - "routes/chat.php"
+  
+  frontend:
+    - "resources/js/echo.ts"
+    - "resources/js/pages/chat/conversation.tsx"
+    - "resources/js/pages/chat/index.tsx"
+    - "vite.config.ts"
+  
+  configuration:
+    - ".env"
+    - "composer.json"
+    - "package.json"
+
+# Troubleshooting
+troubleshooting:
+  common_issues:
+    1:
+      problem: "WebSocket connection failed"
+      causes:
+        - "BROADCAST_CONNECTION set to 'log' instead of 'reverb'"
+        - "Reverb server not running"
+        - "Firewall blocking port 8080"
+        - "Environment variables not loaded"
+      solutions:
+        - "Set BROADCAST_CONNECTION=reverb in .env"
+        - "Run 'php artisan reverb:start'"
+        - "Check firewall settings for port 8080"
+        - "Restart Laravel server after .env changes"
+    
+    2:
+      problem: "Messages not appearing in real-time"
+      causes:
+        - "Vite build using cached WebSocket key"
+        - "Event not broadcasting properly"
+        - "Frontend not listening to correct channel"
+      solutions:
+        - "Run 'npm run build' to update frontend"
+        - "Check Laravel logs for broadcast errors"
+        - "Verify channel name matches: mc-chat-conversation.{id}"
+    
+    3:
+      problem: "Reverb command not found"
+      causes:
+        - "Laravel Reverb not properly installed"
+        - "Service provider not registered"
+      solutions:
+        - "Run 'composer require laravel/reverb'"
+        - "Check composer.json for reverb dependency"
+        - "Clear composer cache: 'composer clear-cache'"
+
+# Testing
+testing:
+  websocket_connection:
+    file: "public/websocket-test.html"
+    purpose: "Test WebSocket connection independently"
+    url: "http://127.0.0.1:8000/websocket-test.html"
+    expected_result: "✓ Connected to WebSocket!"
+  
+  real_time_messaging:
+    steps:
+      1:
+        action: "Open chat in two browser windows"
+        description: "Simulate two different users"
+      
+      2:
+        action: "Send message from window 1"
+        description: "Type and send a message"
+      
+      3:
+        action: "Verify instant appearance in window 2"
+        description: "Message should appear without refresh"
+        expected_time: "< 1 second"
+
+# Cost Analysis
+cost_analysis:
+  setup_costs:
+    laravel_reverb: "$0 (FREE - Self-hosted)"
+    musonza_chat: "$0 (FREE - Open source)"
+    mysql_database: "$0 (FREE - Local hosting)"
+    react_frontend: "$0 (FREE - Open source)"
+  
+  current_websocket_setup:
+    title: "Your Current WebSocket Setup (FREE)"
+    laravel_reverb:
+      description: "Your WebSocket Server"
+      cost: "Completely FREE"
+      hosting: "Runs on your own server (localhost:8080)"
+      limits: "Unlimited connections, unlimited messages"
+      dependencies: "No third-party dependencies: Everything runs locally"
+  
+  ongoing_costs:
+    hosting: "Depends on your web hosting provider"
+    bandwidth: "Minimal - WebSocket connections are lightweight"
+    maintenance: "$0 - Self-managed"
+  
+  comparison:
+    paid_alternatives:
+      pusher_com: "$7-50/month for similar features"
+      ably: "$5-100/month for similar features"
+      socket_io_hosting: "$10-200/month for similar features"
+    
+    savings: "$60-2400/year compared to paid alternatives"
+
+# Security Considerations
+security:
+  websocket_keys:
+    recommendation: "Use generated secure keys (32-character hex)"
+    avoid: "Simple keys like 'local-key' or 'test-key'"
+    rotation: "Consider rotating keys periodically in production"
+  
+  channel_security:
+    type: "Public channels used"
+    note: "Consider private channels for sensitive conversations"
+    authentication: "Implement channel authentication for private chats"
+  
+  environment_variables:
+    protection: "Never commit .env to version control"
+    sharing: "Use different keys for development and production"
+
+# Performance Considerations
+performance:
+  websocket_connections:
+    scaling: "Reverb can handle thousands of concurrent connections"
+    memory: "Minimal memory footprint per connection"
+    cpu: "Low CPU usage for message broadcasting"
+  
+  database_optimization:
+    indexing: "Ensure proper indexes on chat tables"
+    pagination: "Implement message pagination for long conversations"
+    cleanup: "Consider archiving old messages
+
+# Production Deployment
+production_deployment:
+  server_requirements:
+    minimum: "2GB RAM, 1 CPU core"
+    recommended: "4GB RAM, 2+ CPU cores"
+    port_access: "Port 8080 must be open"
+  
+  ssl_configuration:
+    websocket_ssl: "Use wss:// for production"
+    reverb_scheme: "Set REVERB_SCHEME=https"
+    certificate: "Configure SSL certificate"
+  
+  monitoring:
+    websocket_status: "Monitor Reverb server status"
+    connection_count: "Track active WebSocket connections"
+    message_volume: "Monitor message throughput"
+    error_logs: "Watch for broadcast errors"
+
+# Maintenance
+maintenance:
+  regular_tasks:
+    - "Monitor Reverb server logs"
+    - "Check WebSocket connection counts"
+    - "Update dependencies regularly"
+    - "Backup chat database"
+  
+  troubleshooting_tools:
+    - "Browser developer tools for WebSocket inspection"
+    - "Laravel logs for broadcast errors"
+    - "Network monitoring for WebSocket traffic"
+
+# Support Resources
+support:
+  documentation:
+    laravel_reverb: "https://laravel.com/docs/reverb"
+    musonza_chat: "https://github.com/musonza/chat"
+    laravel_echo: "https://laravel.com/docs/broadcasting"
+  
+  community:
+    laracasts: "Laravel educational resources"
+    discord: "Laravel Discord community"
+    github: "Package repositories for issues"

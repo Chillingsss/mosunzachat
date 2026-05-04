@@ -29,9 +29,9 @@ export default defineConfig({
         }),
     ],
     define: {
-        'import.meta.env.VITE_REVERB_APP_KEY': JSON.stringify(process.env.REVERB_APP_KEY || '7de7a40db3937288493c0bae27b25a5e'),
-        'import.meta.env.VITE_REVERB_HOST': JSON.stringify(process.env.REVERB_HOST || 'localhost'),
-        'import.meta.env.VITE_REVERB_PORT': JSON.stringify(process.env.REVERB_PORT || '8080'),
-        'import.meta.env.VITE_REVERB_SCHEME': JSON.stringify(process.env.REVERB_SCHEME || 'http'),
+        'import.meta.env.VITE_REVERB_APP_KEY': JSON.stringify(process.env.REVERB_APP_KEY),
+        'import.meta.env.VITE_REVERB_HOST': JSON.stringify(process.env.REVERB_HOST),
+        'import.meta.env.VITE_REVERB_PORT': JSON.stringify(process.env.REVERB_PORT),
+        'import.meta.env.VITE_REVERB_SCHEME': JSON.stringify(process.env.REVERB_SCHEME),
     },
 });

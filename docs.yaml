@@ -1,6 +1,6 @@
 ---
 name: "Laravel Chat Application"
-description: "Real-time chat application built with Laravel, React, TypeScript, and musonza/chat package"
+description: "Real-time chat application built with Laravel, React, TypeScript, and musonza/chat package with WebSocket support"
 version: "1.0.0"
 author: "Ralph Jan Gallegos"
 
@@ -28,12 +28,15 @@ dependencies:
     musonza/chat: "^6.14"
     inertiajs/inertia-laravel: "^0.6"
     tightenco/ziggy: "^1.0"
+    laravel/reverb: "^1.10"
   
   frontend:
     react: "^18.0"
     typescript: "^5.0"
     @inertiajs/react: "^1.0"
     @inertiajs/core: "^1.0"
+    laravel-echo: "^1.0"
+    pusher-js: "^8.0"
     lucide-react: "^0.263"
     tailwindcss: "^3.0"
   

@@ -9,7 +9,7 @@ A real-time chat application built with Laravel, React, TypeScript, and the muso
 - Responsive design with Tailwind CSS
 - Modern UI with shadcn/ui components
 - TypeScript frontend with React and Inertia.js
-- Polling for new messages (every 3 seconds)
+- Real-time messaging with WebSockets (Laravel Reverb)
 
 ## Requirements
 
@@ -113,7 +113,7 @@ Open your browser and navigate to `http://127.0.0.1:8000`
 2. **Create New Conversation**: Click "+ New Conversation" button
 3. **Select Participants**: Choose users to chat with from the available list
 4. **Send Messages**: Type your message and click "Send" or press Enter
-5. **Real-time Updates**: Messages automatically refresh every 3 seconds
+5. **Real-time Updates**: Messages appear instantly using WebSocket connections
 
 ## Project Structure
 
@@ -169,7 +169,7 @@ mosunzachat/
 - Displays individual conversation messages
 - Handles message sending
 - Auto-scrolls to new messages
-- Polls for new messages every 3 seconds
+- Real-time WebSocket updates via Laravel Reverb
 
 ## Troubleshooting
 
@@ -217,12 +217,15 @@ npm run build
 - `musonza/chat` - Chat package
 - `inertiajs/inertia-laravel` - Inertia.js adapter
 - `tightenco/ziggy` - Route generation
+- `laravel/reverb` - WebSocket server for real-time communication
 
 ### Frontend (npm)
 - `react` - React library
 - `typescript` - TypeScript compiler
 - `@inertiajs/react` - Inertia.js React adapter
 - `@inertiajs/core` - Inertia.js core
+- `laravel-echo` - WebSocket client for real-time communication
+- `pusher-js` - WebSocket protocol implementation
 - `lucide-react` - Icon library
 - `tailwindcss` - CSS framework
 - `shadcn/ui` - UI component library

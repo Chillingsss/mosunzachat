@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.0.0/dist/web/pusher.min.js"></script>
+    <script>
+        const pusher = new Pusher('local-key', {
+            wsHost: '127.0.0.1',
+            wsPort: 8080,
+            forceTLS: false,
+            enabledTransports: ['ws'],
+            cluster: 'mt1'
+        });
+
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+
+        pusher.connection.bind('connected', function() {
+            statusDiv.innerHTML = '<strong style="color: green;">✓ Connected to WebSocket!</strong>';
+            console.log('WebSocket connected');
+        });
+
+        pusher.connection.bind('disconnected', function() {
+            statusDiv.innerHTML = '<strong style="color: red;">✗ Disconnected from WebSocket</strong>';
+            console.log('WebSocket disconnected');
+        });
+
+        pusher.connection.bind('error', function(err) {
+            statusDiv.innerHTML = '<strong style="color: red;">✗ WebSocket Error: ' + err.error.message + '</strong>';
+            console.error('WebSocket error:', err);
+        });
+
+        // Test subscribing to a channel
+        const channel = pusher.subscribe('mc-chat-conversation.1');
+        
+        channel.bind('MessageSentEvent', function(data) {
+            messagesDiv.innerHTML += '<p><strong>Message received:</strong> ' + JSON.stringify(data) + '</p>';
+            console.log('Message received:', data);
+        });
+
+        channel.bind('pusher:subscription_succeeded', function() {
+            messagesDiv.innerHTML += '<p style="color: green;">✓ Subscribed to test channel</p>';
+        });
+    </script>
+</body>
+</html>
